@@ -1,13 +1,17 @@
 # 13 May, 2025
 # Student Management App
 # Created by me (Alex Mai)
-from datetime import datetime
+
+from django.shortcuts import get_object_or_404
 from flask import Flask, render_template, url_for, redirect
 from flask_bootstrap import Bootstrap5
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Integer, String, DATETIME, Float
+from flask_wtf import FlaskForm
+from sqlalchemy import Integer, String, Float
 from sqlalchemy.dialects.mssql import TIMESTAMP
 from sqlalchemy.orm import DeclarativeBase, Mapped, relationship, mapped_column, declarative_mixin
+from wtforms.fields.simple import StringField, SubmitField
+from wtforms.validators import DataRequired
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'xgvdf3423*&%'
@@ -59,13 +63,22 @@ class Faculty(db.Model):
 
 class Course(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    start_time: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=False)
-    end_time: Mapped[datetime] = mapped_column(DATETIME, nullable=False)
+    start_time: Mapped[str] = mapped_column(String, nullable=False)
+    end_time: Mapped[str] = mapped_column(String, nullable=False)
     date_of_week: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
 with app.app_context():
     db.create_all()
+
+
+# FORMS
+class StudentForm(FlaskForm):
+    title = StringField('Name', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired()])
+    name = StringField('Name', validators=[DataRequired()])
+    dob = StringField('Date of Birth', validators=[DataRequired()])
+    submit = SubmitField('Submit Post')
 
 
 @app.route('/')
@@ -104,6 +117,20 @@ def add_student():
     db.session.add(instructor)
     db.session.commit()
     return redirect(url_for('get_student', student=student))
+
+
+@app.route('/delete-student/<int:student_id>')
+def delete_student(id):
+    student = db.get_or_404(Student, id)
+    db.session.delete(student)
+    db.session.commit()
+    return redirect(url_for('get_student'))
+
+
+@app.route('/edit-student/<int:id>')
+def edit_student(id):
+    form = StudentForm()
+    return render_template('student-form.html', form=form)
 
 
 if __name__ == '__main__':
