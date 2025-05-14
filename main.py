@@ -2,16 +2,12 @@
 # Student Management App
 # Created by me (Alex Mai)
 from datetime import datetime
-
-from django.db.models import ForeignKey
-from flask import Flask, render_template
+from flask import Flask, render_template, url_for, redirect
 from flask_bootstrap import Bootstrap5
 from flask_sqlalchemy import SQLAlchemy
-from nbclient.client import timestamp
 from sqlalchemy import Integer, String, DATETIME, Float
 from sqlalchemy.dialects.mssql import TIMESTAMP
-from sqlalchemy.orm import DeclarativeBase, Mapped, relationship
-from sqlalchemy.testing.schema import mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, relationship, mapped_column, declarative_mixin
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'xgvdf3423*&%'
@@ -25,36 +21,40 @@ class Base(DeclarativeBase):
 # Connect to Database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///student.db'
 db = SQLAlchemy(model_class=Base)
-db.init_app()
+db.init_app(app)
 
 
-class Person(db.Model):
+class Student(db.Model):
+    __tablename__ = 'students'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(250), nullable=False)
-    dob: Mapped[datetime] = mapped_column(DATETIME, nullable=False)
+    dob: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str] = mapped_column(String(250), nullable=False)
     sex: Mapped[str] = mapped_column(String(1), nullable=False)
+    faculty_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('faculties.id'))
+    faculty = relationship('Faculty', back_populates='students')
+    gpa: Mapped[float] = mapped_column(Float, nullable=False)
 
 
-class Student(Person):
-    faculty_id: Mapped[int] = mapped_column(Integer, ForeignKey('faculty'))
-    faculty = relationship('Faculty', back_populates='instructor')
-
-
-class Instructor(Person):
+class Instructor(db.Model):
+    __tablename__ = 'instructors'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(250), nullable=False)
+    dob: Mapped[str] = mapped_column(String(100), nullable=False)
+    email: Mapped[str] = mapped_column(String(250), nullable=False)
+    sex: Mapped[str] = mapped_column(String(1), nullable=False)
+    faculty_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('faculties.id'))
+    faculty = relationship('Faculty', back_populates='instructors')
     salary: Mapped[float] = mapped_column(Float, nullable=False)
-    start_date: Mapped[datetime] = mapped_column(DATETIME, nullable=False)
-
-    faculty_id: Mapped[int] = mapped_column(Integer, ForeignKey('faculty'))
-    faculty = relationship('Faculty', back_populates='instructor')
+    start_date: Mapped[str] = mapped_column(String(100), nullable=False)
 
 
 class Faculty(db.Model):
+    __tablename__ = 'faculties'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[int] = mapped_column(String(250), nullable=False)
-
-    instructor = relationship('Instructor', back_populates='faculty')
-    student = relationship('Student', back_populates='faculty')
+    students = relationship('Student', back_populates='faculty')
+    instructors = relationship('Instructor', back_populates='faculty')
 
 
 class Course(db.Model):
@@ -62,7 +62,7 @@ class Course(db.Model):
     start_time: Mapped[datetime] = mapped_column(TIMESTAMP, nullable=False)
     end_time: Mapped[datetime] = mapped_column(DATETIME, nullable=False)
     date_of_week: Mapped[int] = mapped_column(Integer, nullable=False)
-    
+
 
 with app.app_context():
     db.create_all()
@@ -70,5 +70,41 @@ with app.app_context():
 
 @app.route('/')
 def get_student():
-    students = db.session.execute(db.select(Student)).scalars.all()
+    students = db.session.execute(db.select(Student)).scalars().all()
     return render_template('index.html', students=students)
+
+
+@app.route('/add-student')
+def add_student():
+    student = Student(
+        dob='10/12/2002',
+        name='Alex',
+        sex='F',
+        email='alex@gmail.com',
+        faculty_id=1,
+        gpa=9.5,
+    )
+
+    faculty = Faculty(
+        name='Computer Science',
+    )
+
+    instructor = Instructor(
+        name='Cairo',
+        dob='10/10/2001',
+        email='cairo@gmail.com',
+        sex='M',
+        faculty_id=1,
+        salary=5000000,
+        start_date='10/10/2024',
+    )
+
+    db.session.add(faculty)
+    db.session.add(student)
+    db.session.add(instructor)
+    db.session.commit()
+    return redirect(url_for('get_student', student=student))
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
