@@ -34,7 +34,7 @@ class Student(db.Model):
     name: Mapped[str] = mapped_column(String(250), nullable=False)
     dob: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str] = mapped_column(String(250), nullable=False)
-    sex: Mapped[str] = mapped_column(String(1), nullable=False)
+    gender: Mapped[str] = mapped_column(String(1), nullable=False)
     faculty_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('faculties.id'))
     faculty = relationship('Faculty', back_populates='students')
     gpa: Mapped[float] = mapped_column(Float, nullable=False)
@@ -46,7 +46,7 @@ class Instructor(db.Model):
     name: Mapped[str] = mapped_column(String(250), nullable=False)
     dob: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str] = mapped_column(String(250), nullable=False)
-    sex: Mapped[str] = mapped_column(String(1), nullable=False)
+    gender: Mapped[str] = mapped_column(String(1), nullable=False)
     faculty_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('faculties.id'))
     faculty = relationship('Faculty', back_populates='instructors')
     salary: Mapped[float] = mapped_column(Float, nullable=False)
@@ -74,10 +74,10 @@ with app.app_context():
 
 # FORMS
 class StudentForm(FlaskForm):
-    title = StringField('Name', validators=[DataRequired()])
-    email = StringField('Email', validators=[DataRequired()])
     name = StringField('Name', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired()])
     dob = StringField('Date of Birth', validators=[DataRequired()])
+    gender = StringField('Gender', validators=[DataRequired()])
     submit = SubmitField('Submit Post')
 
 
@@ -92,7 +92,7 @@ def add_student():
     student = Student(
         dob='10/12/2002',
         name='Alex',
-        sex='F',
+        gender='F',
         email='alex@gmail.com',
         faculty_id=1,
         gpa=9.5,
@@ -106,7 +106,7 @@ def add_student():
         name='Cairo',
         dob='10/10/2001',
         email='cairo@gmail.com',
-        sex='M',
+        gender='M',
         faculty_id=1,
         salary=5000000,
         start_date='10/10/2024',
@@ -127,9 +127,25 @@ def delete_student(id):
     return redirect(url_for('get_student'))
 
 
-@app.route('/edit-student/<int:id>')
+@app.route('/edit-student/<int:id>', methods=['GET', 'POST'])
 def edit_student(id):
-    form = StudentForm()
+    student = db.get_or_404(Student, id)
+    form = StudentForm(
+        name=student.name,
+        email=student.email,
+        dob=student.dob,
+        gender=student.gender,
+    )
+
+    if form.validate_on_submit():
+        student.name = form.name.data
+        student.email = form.email.data
+        student.dob = form.dob.data
+        student.gender = form.gender.data
+        db.session.commit()
+        students = db.session.execute(db.select(Student)).scalars().all()
+        return redirect(url_for('get_student', students=students))
+
     return render_template('student-form.html', form=form)
 
 
