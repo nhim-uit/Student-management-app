@@ -1,8 +1,32 @@
 {% extends 'base.html' %}
 {% block content %}
+<div class="container">
     <h1>Student Management Application</h1>
-    {% for student in students %}
-    <p>{{ student.name }}</p>
-    <p>{{ student.email }}</p>
-    {% endfor %}
+    <table class="table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>DOB</th>
+            <th>Gender</th>
+            <th>Faculty</th>
+            <th>GPA</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for student in students %}
+        <tr>
+            <th>{{ student.id }}</th>
+            <td>{{ student.name }}</td>
+            <td>{{ student.email }}</td>
+            <td>{{ student.dob }}</td>
+            <td>{{ student.gender }}</td>
+            <td>{{ student.faculty }}</td>
+            <td>{{ student.gpa }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
