@@ -2,14 +2,13 @@
 # Student Management App
 # Created by me (Alex Mai)
 
-from django.shortcuts import get_object_or_404
 from flask import Flask, render_template, url_for, redirect
 from flask_bootstrap import Bootstrap5
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from sqlalchemy import Integer, String, Float
-from sqlalchemy.dialects.mssql import TIMESTAMP
-from sqlalchemy.orm import DeclarativeBase, Mapped, relationship, mapped_column, declarative_mixin
+from sqlalchemy.orm import DeclarativeBase, Mapped, relationship, mapped_column
+from wtforms.fields.numeric import IntegerField, FloatField
 from wtforms.fields.simple import StringField, SubmitField
 from wtforms.validators import DataRequired
 
@@ -28,26 +27,25 @@ db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
 
-class Student(db.Model):
+class Person(db.Model):
     __tablename__ = 'students'
+    __abstract__ = True
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(250), nullable=False)
     dob: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str] = mapped_column(String(250), nullable=False)
     gender: Mapped[str] = mapped_column(String(1), nullable=False)
     faculty_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('faculties.id'))
+
+
+class Student(Person):
+    __tablename__ = 'students'
     faculty = relationship('Faculty', back_populates='students')
     gpa: Mapped[float] = mapped_column(Float, nullable=False)
 
 
-class Instructor(db.Model):
+class Instructor(Person):
     __tablename__ = 'instructors'
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(250), nullable=False)
-    dob: Mapped[str] = mapped_column(String(100), nullable=False)
-    email: Mapped[str] = mapped_column(String(250), nullable=False)
-    gender: Mapped[str] = mapped_column(String(1), nullable=False)
-    faculty_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('faculties.id'))
     faculty = relationship('Faculty', back_populates='instructors')
     salary: Mapped[float] = mapped_column(Float, nullable=False)
     start_date: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -56,7 +54,7 @@ class Instructor(db.Model):
 class Faculty(db.Model):
     __tablename__ = 'faculties'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[int] = mapped_column(String(250), nullable=False)
+    name: Mapped[int] = mapped_column(String(250), nullable=False, unique=True)
     students = relationship('Student', back_populates='faculty')
     instructors = relationship('Instructor', back_populates='faculty')
 
@@ -78,6 +76,8 @@ class StudentForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
     dob = StringField('Date of Birth', validators=[DataRequired()])
     gender = StringField('Gender', validators=[DataRequired()])
+    faculty_id = IntegerField('Faculty')
+    gpa = FloatField('Gpa')
     submit = SubmitField('Submit Post')
 
 
@@ -87,44 +87,40 @@ def get_student():
     return render_template('index.html', students=students)
 
 
-@app.route('/add-student')
+@app.route('/add-student', methods=['GET', 'POST'])
 def add_student():
-    student = Student(
-        dob='10/12/2002',
-        name='Alex',
-        gender='F',
-        email='alex@gmail.com',
-        faculty_id=1,
-        gpa=9.5,
-    )
+    form = StudentForm()
+    faculties = db.session.execute(db.select(Faculty)).scalars().all()
 
-    faculty = Faculty(
-        name='Computer Science',
-    )
+    if form.validate_on_submit():
+        student = Student(
+            name=form.name.data,
+            email=form.email.data,
+            dob=form.dob.data,
+            gender=form.gender.data,
+            faculty_id=form.faculty_id.data,
+            gpa=form.gpa.data
+        )
+        db.session.add(student)
+        db.session.commit()
 
-    instructor = Instructor(
-        name='Cairo',
-        dob='10/10/2001',
-        email='cairo@gmail.com',
-        gender='M',
-        faculty_id=1,
-        salary=5000000,
-        start_date='10/10/2024',
-    )
-
-    db.session.add(faculty)
-    db.session.add(student)
-    db.session.add(instructor)
-    db.session.commit()
-    return redirect(url_for('get_student', student=student))
+        students = db.session.execute(db.select(Student)).scalars().all()
+        return redirect(url_for('get_student', students=students, form=form))
+    return render_template('student-form.html', form=form, faculties=faculties)
 
 
-@app.route('/delete-student/<int:student_id>')
-def delete_student(id):
-    student = db.get_or_404(Student, id)
-    db.session.delete(student)
-    db.session.commit()
-    return redirect(url_for('get_student'))
+@app.route('/delete-student/', methods=['GET', 'POST'])
+def delete_student():
+    form = StudentForm()
+
+    if form.validate_on_submit():
+        student = db.get_or_404(Student, form.id)
+        db.session.delete(student)
+        db.session.commit()
+        students = db.session.execute(db.select(Student)).scalars().all()
+        return redirect(url_for('get_student', students=students))
+    print('yesss')
+    return render_template('delete.html', form=form)
 
 
 @app.route('/edit-student/<int:id>', methods=['GET', 'POST'])
