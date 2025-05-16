@@ -2,7 +2,7 @@
 # Student Management App
 # Created by me (Alex Mai)
 
-from flask import Flask, render_template, url_for, redirect
+from flask import Flask, render_template, url_for, redirect, request
 from flask_bootstrap import Bootstrap5
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
@@ -81,7 +81,7 @@ class StudentForm(FlaskForm):
     submit = SubmitField('Submit Post')
 
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def get_student():
     students = db.session.execute(db.select(Student)).scalars().all()
     return render_template('index.html', students=students)
@@ -90,9 +90,14 @@ def get_student():
 @app.route('/add-student', methods=['GET', 'POST'])
 def add_student():
     form = StudentForm()
+    # faculty = Faculty(
+    #     name='Engineering',
+    # )
+    # db.session.add(faculty)
+    # db.session.commit()
     faculties = db.session.execute(db.select(Faculty)).scalars().all()
 
-    if form.validate_on_submit():
+    if request.method == 'POST':
         student = Student(
             name=form.name.data,
             email=form.email.data,
@@ -105,7 +110,7 @@ def add_student():
         db.session.commit()
 
         students = db.session.execute(db.select(Student)).scalars().all()
-        return redirect(url_for('get_student', students=students, form=form))
+        return redirect(url_for('get_student', students=students))
     return render_template('student-form.html', form=form, faculties=faculties)
 
 
