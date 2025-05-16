@@ -25,9 +25,9 @@
         </div>
         <div class="form-group">
             <label>Faculty</label>
-            <select class="form-control">
+            <select class="form-control" name="faculty_id">
                 {% for faculty in faculties %}
-                <option name="{{ faculty.id }}">{{ faculty.name }}</option>
+                <option value="{{ faculty.id }}">{{ faculty.name }}</option>
                 {% endfor %}
             </select>
         </div>
