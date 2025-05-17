@@ -1,13 +1,15 @@
 # 13 May, 2025
 # Student Management App
 # Created by me (Alex Mai)
+from datetime import datetime
 
 from flask import Flask, render_template, url_for, redirect, request
 from flask_bootstrap import Bootstrap5
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
-from sqlalchemy import Integer, String, Float
+from sqlalchemy import Integer, String, Float, DATETIME, DateTime
 from sqlalchemy.orm import DeclarativeBase, Mapped, relationship, mapped_column
+from wtforms.fields.datetime import DateField
 from wtforms.fields.numeric import IntegerField, FloatField
 from wtforms.fields.simple import StringField, SubmitField
 from wtforms.validators import DataRequired
@@ -32,7 +34,7 @@ class Person(db.Model):
     __abstract__ = True
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(250), nullable=False)
-    dob: Mapped[str] = mapped_column(String(100), nullable=False)
+    dob: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     email: Mapped[str] = mapped_column(String(250), nullable=False)
     gender: Mapped[str] = mapped_column(String(1), nullable=False)
     faculty_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('faculties.id'))
@@ -74,10 +76,11 @@ with app.app_context():
 class StudentForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired()])
-    dob = StringField('Date of Birth', validators=[DataRequired()])
+    dob = DateField('Date of Birth', validators=[DataRequired()])
     gender = StringField('Gender', validators=[DataRequired()])
-    faculty_id = IntegerField('Faculty')
-    gpa = FloatField('Gpa')
+    faculty_name = StringField('Faculty')
+    faculty_id = IntegerField('Faculty id')
+    gpa = FloatField('Gpa') # will add gpa table later
     submit = SubmitField('Submit Post')
 
 
@@ -114,6 +117,16 @@ def add_student():
     return render_template('student-form.html', form=form, faculties=faculties)
 
 
+@app.route('/add-faculty')
+def add_faculty():
+    faculty = Faculty(
+        name='Engineering'
+    )
+    db.session.add(faculty)
+    db.session.commit()
+    return redirect(url_for('get_student'))
+
+
 @app.route('/delete-student/', methods=['GET', 'POST'])
 def delete_student():
     student_id = request.args.get('id')
@@ -133,14 +146,19 @@ def edit_student(id):
         email=student.email,
         dob=student.dob,
         gender=student.gender,
+        faculty_name=student.faculty.name,
+        gpa=student.gpa,
     )
     faculties = db.session.execute(db.select(Faculty)).scalars().all()
+    print(form.dob)
 
     if form.validate_on_submit():
         student.name = form.name.data
         student.email = form.email.data
         student.dob = form.dob.data
         student.gender = form.gender.data
+        student.faculty.name = form.faculty_name.data
+        student.gpa = form.gpa.data
 
         db.session.commit()
 
