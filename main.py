@@ -51,7 +51,7 @@ class Instructor(Person):
     __tablename__ = 'instructors'
     faculty = relationship('Faculty', back_populates='instructors')
     salary: Mapped[float] = mapped_column(Float, nullable=False)
-    start_date: Mapped[str] = mapped_column(String(100), nullable=False)
+    start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
 class Faculty(db.Model):
@@ -74,11 +74,16 @@ with app.app_context():
 
 
 # FORMS
-class StudentForm(FlaskForm):
+class PersonForm(FlaskForm):
+    __abstract__ = True
     name = StringField('Name', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired()])
     dob = DateField('Date of Birth', validators=[DataRequired()])
     gender = SelectField('Gender', choices=[('F', 'Female'), ('M', 'Male')], validators=[DataRequired()])
+    submit = SubmitField('Submit Post')
+
+
+class StudentForm(PersonForm):
     faculty_id = SelectField('Faculty',
                              choices=[(1, 'Computer Science'), (2, 'Engineering'), (3, 'Arts')],
                              validators=[DataRequired()])
@@ -86,6 +91,15 @@ class StudentForm(FlaskForm):
     submit = SubmitField('Submit Post')
 
 
+class InstructorForm(PersonForm):
+    salary = FloatField('Salary', validators=[DataRequired()])
+    start_date = DateField('Start date', validators=[DataRequired()])
+
+
+class FacultyForm(FlaskForm):
+    name = StringField('Faculty name', validators=[DataRequired()])
+
+    
 @app.route('/', methods=['GET', 'POST'])
 def get_student():
     students = db.session.execute(db.select(Student)).scalars().all()
