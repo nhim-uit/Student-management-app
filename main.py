@@ -116,16 +116,13 @@ def add_student():
 
 @app.route('/delete-student/', methods=['GET', 'POST'])
 def delete_student():
-    form = StudentForm()
+    student_id = request.args.get('id')
+    student = db.get_or_404(Student, student_id)
 
-    if form.validate_on_submit():
-        student = db.get_or_404(Student, form.id)
-        db.session.delete(student)
-        db.session.commit()
-        students = db.session.execute(db.select(Student)).scalars().all()
-        return redirect(url_for('get_student', students=students))
-    print('yesss')
-    return render_template('delete.html', form=form)
+    db.session.delete(student)
+    db.session.commit()
+    students = db.session.execute(db.select(Student)).scalars().all()
+    return redirect(url_for('get_student', students=students))
 
 
 @app.route('/edit-student/<int:id>', methods=['GET', 'POST'])
@@ -137,17 +134,20 @@ def edit_student(id):
         dob=student.dob,
         gender=student.gender,
     )
+    faculties = db.session.execute(db.select(Faculty)).scalars().all()
 
     if form.validate_on_submit():
         student.name = form.name.data
         student.email = form.email.data
         student.dob = form.dob.data
         student.gender = form.gender.data
+
         db.session.commit()
+
         students = db.session.execute(db.select(Student)).scalars().all()
         return redirect(url_for('get_student', students=students))
 
-    return render_template('student-form.html', form=form)
+    return render_template('delete.html', form=form, is_student=True, student=student, faculties=faculties)
 
 
 if __name__ == '__main__':
