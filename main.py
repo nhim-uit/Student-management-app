@@ -104,7 +104,8 @@ class FacultyForm(FlaskForm):
 def get_all():
     students = db.session.execute(db.select(Student)).scalars().all()
     instructors = db.session.execute(db.select(Instructor)).scalars().all()
-    return render_template('index.html', students=students, instructors=instructors)
+    faculties = db.session.execute(db.select(Faculty)).scalars().all()
+    return render_template('index.html', students=students, instructors=instructors, faculties=faculties)
 
 
 @app.route('/add-student', methods=['GET', 'POST'])
@@ -146,12 +147,24 @@ def add_instructor():
         )
         db.session.add(instructor)
         db.session.commit()
-        print('yes')
 
         instructors = db.session.execute(db.select(Instructor)).scalars().all()
         students = db.session.execute(db.select(Student)).scalars().all()
-        return redirect(url_for('get_all', instructors=instructors))
+        return redirect(url_for('get_all', instructors=instructors, students=students))
     return render_template('instructor-form.html', form=form)
+
+
+@app.route('/add-faculty', methods=['GET', 'POST'])
+def add_faculty():
+    form = FacultyForm()
+
+    if form.validate_on_submit():
+        faculty = FacultyForm(
+            name=form.name.data,
+        )
+        db.session.add(faculty)
+        db.session.commit()
+    return render_template('faculty-form.html', form=form)
 
 
 @app.route('/delete-student/', methods=['GET', 'POST'])
@@ -176,6 +189,17 @@ def delete_instructor():
     instructors = db.session.execute(db.select(Instructor)).scalars().all()
     students = db.session.execute(db.select(Student)).scalars().all()
     return redirect(url_for('get_all', instructors=instructors, students=students))
+
+
+@app.route('/delete-faculty/', methods=['GET', 'POST'])
+def delete_faculty():
+    faculty_id = request.args.get('id')
+    faculty = db.get_or_404(Faculty, faculty_id)
+
+    db.session.delete(faculty)
+    db.session.commit()
+    faculties = db.session.execute(db.select(faculty)).scalars().all()
+    return redirect(url_for('get_all', facultys=faculties))
 
 
 @app.route('/edit-student/<int:id>', methods=['GET', 'POST'])
@@ -232,6 +256,25 @@ def edit_instructor(id):
         return redirect(url_for('get_all', instructors=instructors))
 
     return render_template('instructor-form.html', form=form, faculties=faculties)
+
+
+@app.route('/edit-faculty/<int:id>', methods=['GET', 'POST'])
+def edit_faculty(id):
+    faculty = db.get_or_404(Faculty, id)
+    form = FacultyForm(
+        name=faculty.name,
+    )
+    faculties = db.session.execute(db.select(Faculty)).scalars().all()
+
+    if form.validate_on_submit():
+        faculty.name = form.name.data
+
+        db.session.commit()
+
+        faculties = db.session.execute(db.select(Student)).scalars().all()
+        return redirect(url_for('get_all', students=faculties))
+
+    return render_template('faculty-form.html', form=form, faculties=faculties)
 
 
 if __name__ == '__main__':
