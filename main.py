@@ -147,7 +147,7 @@ def edit_student(id):
         students = db.session.execute(db.select(Student)).scalars().all()
         return redirect(url_for('get_student', students=students))
 
-    return render_template('delete.html', form=form, is_student=True, student=student, faculties=faculties)
+    return render_template('student-form.html', form=form, is_student=True, student=student, faculties=faculties)
 
 
 if __name__ == '__main__':
