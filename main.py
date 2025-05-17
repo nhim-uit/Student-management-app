@@ -9,6 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from sqlalchemy import Integer, String, Float, DATETIME, DateTime
 from sqlalchemy.orm import DeclarativeBase, Mapped, relationship, mapped_column
+from wtforms.fields.choices import SelectField
 from wtforms.fields.datetime import DateField
 from wtforms.fields.numeric import IntegerField, FloatField
 from wtforms.fields.simple import StringField, SubmitField
@@ -77,9 +78,10 @@ class StudentForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired()])
     dob = DateField('Date of Birth', validators=[DataRequired()])
-    gender = StringField('Gender', validators=[DataRequired()])
-    faculty_name = StringField('Faculty')
-    faculty_id = IntegerField('Faculty id')
+    gender = SelectField('Gender', choices=[('F', 'Female'), ('M', 'Male')], validators=[DataRequired()])
+    faculty_id = SelectField('Faculty',
+                             choices=[(1, 'Computer Science'), (2, 'Engineering'), (3, 'Arts')],
+                             validators=[DataRequired()])
     gpa = FloatField('Gpa') # will add gpa table later
     submit = SubmitField('Submit Post')
 
@@ -120,7 +122,7 @@ def add_student():
 @app.route('/add-faculty')
 def add_faculty():
     faculty = Faculty(
-        name='Engineering'
+        name='Arts'
     )
     db.session.add(faculty)
     db.session.commit()
@@ -146,7 +148,6 @@ def edit_student(id):
         email=student.email,
         dob=student.dob,
         gender=student.gender,
-        faculty_name=student.faculty.name,
         gpa=student.gpa,
     )
     faculties = db.session.execute(db.select(Faculty)).scalars().all()
@@ -157,7 +158,6 @@ def edit_student(id):
         student.email = form.email.data
         student.dob = form.dob.data
         student.gender = form.gender.data
-        student.faculty.name = form.faculty_name.data
         student.gpa = form.gpa.data
 
         db.session.commit()
@@ -165,7 +165,7 @@ def edit_student(id):
         students = db.session.execute(db.select(Student)).scalars().all()
         return redirect(url_for('get_student', students=students))
 
-    return render_template('student-form.html', form=form, is_student=True, student=student, faculties=faculties)
+    return render_template('student-form.html', form=form, faculties=faculties)
 
 
 if __name__ == '__main__':
