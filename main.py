@@ -80,13 +80,12 @@ class PersonForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
     dob = DateField('Date of Birth', validators=[DataRequired()])
     gender = SelectField('Gender', choices=[('F', 'Female'), ('M', 'Male')], validators=[DataRequired()])
-    submit = SubmitField('Submit Post')
-
-
-class StudentForm(PersonForm):
     faculty_id = SelectField('Faculty',
                              choices=[(1, 'Computer Science'), (2, 'Engineering'), (3, 'Arts')],
                              validators=[DataRequired()])
+
+
+class StudentForm(PersonForm):
     gpa = FloatField('Gpa') # will add gpa table later
     submit = SubmitField('Submit Post')
 
@@ -94,26 +93,28 @@ class StudentForm(PersonForm):
 class InstructorForm(PersonForm):
     salary = FloatField('Salary', validators=[DataRequired()])
     start_date = DateField('Start date', validators=[DataRequired()])
+    submit = SubmitField('Submit Post')
 
 
 class FacultyForm(FlaskForm):
     name = StringField('Faculty name', validators=[DataRequired()])
 
-    
+
 @app.route('/', methods=['GET', 'POST'])
 def get_student():
     students = db.session.execute(db.select(Student)).scalars().all()
     return render_template('index.html', students=students)
 
 
+@app.route('/get-instructor', methods=['GET', 'POST'])
+def get_instructor():
+    instructors = db.session.execute(db.select(Instructor)).scalars().all()
+    return render_template('index.html', instructors=instructors)
+
+
 @app.route('/add-student', methods=['GET', 'POST'])
 def add_student():
     form = StudentForm()
-    # faculty = Faculty(
-    #     name='Engineering',
-    # )
-    # db.session.add(faculty)
-    # db.session.commit()
     faculties = db.session.execute(db.select(Faculty)).scalars().all()
 
     if request.method == 'POST':
@@ -133,14 +134,27 @@ def add_student():
     return render_template('student-form.html', form=form, faculties=faculties)
 
 
-@app.route('/add-faculty')
-def add_faculty():
-    faculty = Faculty(
-        name='Arts'
-    )
-    db.session.add(faculty)
-    db.session.commit()
-    return redirect(url_for('get_student'))
+@app.route('/add-instructor', methods=['GET', 'POST'])
+def add_instructor():
+    form = InstructorForm()
+
+    if form.validate_on_submit():
+        instructor = Instructor(
+            name=form.name.data,
+            email=form.email.data,
+            dob=form.dob.data,
+            gender=form.gender.data,
+            salary=form.salary.data,
+            start_date=form.start_date.data,
+            faculty_id=form.faculty_id.data,
+        )
+        db.session.add(instructor)
+        db.session.commit()
+        print('yes')
+
+        instructors = db.session.execute(db.select(Instructor)).scalars().all()
+        return redirect(url_for('get_instructor', instructors=instructors))
+    return render_template('instructor-form.html', form=form)
 
 
 @app.route('/delete-student/', methods=['GET', 'POST'])
@@ -154,6 +168,17 @@ def delete_student():
     return redirect(url_for('get_student', students=students))
 
 
+@app.route('/delete-instructor/', methods=['GET', 'POST'])
+def delete_instructor():
+    instructor_id = request.args.get('id')
+    instructor = db.get_or_404(Instructor, instructor_id)
+
+    db.session.delete(instructor)
+    db.session.commit()
+    instructors = db.session.execute(db.select(Instructor)).scalars().all()
+    return redirect(url_for('get_instructor', instructors=instructors))
+
+
 @app.route('/edit-student/<int:id>', methods=['GET', 'POST'])
 def edit_student(id):
     student = db.get_or_404(Student, id)
@@ -165,7 +190,6 @@ def edit_student(id):
         gpa=student.gpa,
     )
     faculties = db.session.execute(db.select(Faculty)).scalars().all()
-    print(form.dob)
 
     if form.validate_on_submit():
         student.name = form.name.data
@@ -180,6 +204,35 @@ def edit_student(id):
         return redirect(url_for('get_student', students=students))
 
     return render_template('student-form.html', form=form, faculties=faculties)
+
+
+@app.route('/edit-instructor/<int:id>', methods=['GET', 'POST'])
+def edit_instructor(id):
+    instructor = db.get_or_404(Instructor, id)
+    form = InstructorForm(
+        name=instructor.name,
+        email=instructor.email,
+        dob=instructor.dob,
+        gender=instructor.gender,
+        salary=instructor.salary,
+        start_date=instructor.start_date,
+    )
+    faculties = db.session.execute(db.select(Faculty)).scalars().all()
+
+    if form.validate_on_submit():
+        instructor.name = form.name.data
+        instructor.email = form.email.data
+        instructor.dob = form.dob.data
+        instructor.gender = form.gender.data
+        instructor.start_date = form.start_date.data
+        instructor.salary = form.salary.data
+
+        db.session.commit()
+
+        instructors = db.session.execute(db.select(Instructor)).scalars().all()
+        return redirect(url_for('get_instructor', instructors=instructors))
+
+    return render_template('instructor-form.html', form=form, faculties=faculties)
 
 
 if __name__ == '__main__':
