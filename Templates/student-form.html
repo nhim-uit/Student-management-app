@@ -2,8 +2,8 @@
 {% block content %}
 {% from 'bootstrap5/form.html' import render_form %}
 <div  class="container">
-    <form method="post">
-        {{ form.csrf_token }}
+    <form method="POST">
+        {{ form.hidden_tag() }}
         <div class="form-group">
             <label>Name:</label>
             <input name="name" class="form-control"/>
@@ -35,7 +35,7 @@
             <label>GPA: </label>
             <input name="gpa" class="form-control"/>
         </div>
-        <button type="submit" class="btn btn-primary mb-2">Submit</button>
+        <button type="submit" class="btn btn-primary mb-2 mt-2">Submit</button>
     </form>
 </div>
 {% endblock %}
