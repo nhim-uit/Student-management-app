@@ -103,7 +103,8 @@ class FacultyForm(FlaskForm):
 @app.route('/', methods=['GET', 'POST'])
 def get_student():
     students = db.session.execute(db.select(Student)).scalars().all()
-    return render_template('index.html', students=students)
+    instructors = db.session.execute(db.select(Instructor)).scalars().all()
+    return render_template('index.html', students=students, instructors=instructors)
 
 
 @app.route('/get-instructor', methods=['GET', 'POST'])
