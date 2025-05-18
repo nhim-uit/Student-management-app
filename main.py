@@ -31,7 +31,6 @@ db.init_app(app)
 
 
 class Person(db.Model):
-    __tablename__ = 'students'
     __abstract__ = True
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(250), nullable=False)
@@ -43,37 +42,41 @@ class Person(db.Model):
 
 class Student(Person):
     __tablename__ = 'students'
-    faculty = relationship('Faculty', back_populates='students')
+    faculties = relationship('Faculty', back_populates='students')
     gpa: Mapped[float] = mapped_column(Float, nullable=False)
 
 
 class Instructor(Person):
     __tablename__ = 'instructors'
-    faculty = relationship('Faculty', back_populates='instructors')
-    course = relationship('Course', back_populates='instructors')
     salary: Mapped[float] = mapped_column(Float, nullable=False)
     start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    faculties = relationship('Faculty', back_populates='instructors')
+    faculty_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('faculties.id'))
+    courses = relationship('Course', back_populates='instructors')
 
 
 class Faculty(db.Model):
     __tablename__ = 'faculties'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(250), nullable=False, unique=True)
-    students = relationship('Student', back_populates='faculty')
-    instructors = relationship('Instructor', back_populates='faculty')
+    students = relationship('Student', back_populates='faculties')
+    instructors = relationship('Instructor', back_populates='faculties')
+    courses = relationship('Course', back_populates='faculties')
 
 
 class Course(db.Model):
+    __tablename__ = 'courses'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    start_time: Mapped[str] = mapped_column(String, nullable=False)
-    end_time: Mapped[str] = mapped_column(String, nullable=False)
+    start_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    end_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     credit: Mapped[int] = mapped_column(Integer, nullable=False)
-    duration: Mapped[str] = mapped_column(String, nullable=False)
+    duration: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str] = mapped_column(String(100), nullable=False)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
-    instructors = relationship('Instructor', back_populates='course')
+    instructors = relationship('Instructor', back_populates='courses')
     faculty_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('faculties.id'))
     instructor_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('instructors.id'))
+    faculties = relationship('Faculty', back_populates='courses')
 
 
 with app.app_context():
@@ -100,11 +103,15 @@ class StudentForm(PersonForm):
 class InstructorForm(PersonForm):
     salary = FloatField('Salary', validators=[DataRequired()])
     start_date = DateField('Start date', validators=[DataRequired()])
+    faculty_id = SelectField('Faculty',
+                             choices=[(1, 'Computer Science'), (2, 'Engineering'), (3, 'Arts')],
+                             validators=[DataRequired()])
     submit = SubmitField('Submit Post')
 
 
 class FacultyForm(FlaskForm):
     name = StringField('Faculty name', validators=[DataRequired()])
+    submit = SubmitField('Submit Post')
 
 
 class CourseForm(FlaskForm):
@@ -118,6 +125,21 @@ class CourseForm(FlaskForm):
     instructors = relationship('Instructor', back_populates='course')
     faculty_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('faculties.id'))
     instructor_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('instructors.id'))
+    submit = SubmitField('Submit Post')
+
+
+@app.route('/add-my-faculty', methods=['GET', 'POST'])
+def add_my_faculty():
+    faculty1 = Faculty(
+        name='Computer Science'
+    )
+    faculty2 = Faculty(
+        name='Engineering'
+    )
+    db.session.add(faculty1)
+    db.session.add(faculty2)
+    db.session.commit()
+    return redirect(url_for('get_all'))
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -254,7 +276,7 @@ def delete_faculty():
     db.session.delete(faculty)
     db.session.commit()
     faculties = db.session.execute(db.select(Faculty)).scalars().all()
-    return redirect(url_for('get_all', facultys=faculties))
+    return redirect(url_for('get_all', faculties=faculties))
 
 
 @app.route('/delete-course/', methods=['GET', 'POST'])
@@ -292,7 +314,7 @@ def edit_student(id):
         students = db.session.execute(db.select(Student)).scalars().all()
         return redirect(url_for('get_all', students=students))
 
-    return render_template('student-form.html', form=form, faculties=faculties)
+    return render_template('student-form.html', form=form)
 
 
 @app.route('/edit-course/<int:id>', methods=['GET', 'POST'])
@@ -335,7 +357,6 @@ def edit_instructor(id):
         salary=instructor.salary,
         start_date=instructor.start_date,
     )
-    faculties = db.session.execute(db.select(Faculty)).scalars().all()
 
     if form.validate_on_submit():
         instructor.name = form.name.data
@@ -350,7 +371,7 @@ def edit_instructor(id):
         instructors = db.session.execute(db.select(Instructor)).scalars().all()
         return redirect(url_for('get_all', instructors=instructors))
 
-    return render_template('instructor-form.html', form=form, faculties=faculties)
+    return render_template('instructor-form.html', form=form)
 
 
 @app.route('/edit-faculty/<int:id>', methods=['GET', 'POST'])
@@ -369,7 +390,7 @@ def edit_faculty(id):
         faculties = db.session.execute(db.select(Faculty)).scalars().all()
         return redirect(url_for('get_all', students=faculties))
 
-    return render_template('faculty-form.html', form=form, faculties=faculties)
+    return render_template('faculty-form.html', form=form)
 
 
 if __name__ == '__main__':
