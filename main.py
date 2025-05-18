@@ -58,7 +58,7 @@ class Instructor(Person):
 class Faculty(db.Model):
     __tablename__ = 'faculties'
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[int] = mapped_column(String(250), nullable=False, unique=True)
+    name: Mapped[str] = mapped_column(String(250), nullable=False, unique=True)
     students = relationship('Student', back_populates='faculty')
     instructors = relationship('Instructor', back_populates='faculty')
 
@@ -199,6 +199,7 @@ def add_faculty():
         )
         db.session.add(faculty)
         db.session.commit()
+        return redirect(url_for('get_all'))
     return render_template('faculty-form.html', form=form)
 
 
@@ -217,6 +218,7 @@ def add_course():
         )
         db.session.add(course)
         db.session.commit()
+        return redirect(url_for('get_all'))
     return render_template('course-form.html', form=form)
 
 
@@ -251,14 +253,14 @@ def delete_faculty():
 
     db.session.delete(faculty)
     db.session.commit()
-    faculties = db.session.execute(db.select(faculty)).scalars().all()
-    return (redirect(url_for('get_all', facultys=faculties)))
+    faculties = db.session.execute(db.select(Faculty)).scalars().all()
+    return redirect(url_for('get_all', facultys=faculties))
 
 
 @app.route('/delete-course/', methods=['GET', 'POST'])
 def delete_course():
     course_id = request.args.get('id')
-    course = db.get_or_404(Faculty, course_id)
+    course = db.get_or_404(Course, course_id)
 
     db.session.delete(course)
     db.session.commit()
@@ -291,6 +293,35 @@ def edit_student(id):
         return redirect(url_for('get_all', students=students))
 
     return render_template('student-form.html', form=form, faculties=faculties)
+
+
+@app.route('/edit-course/<int:id>', methods=['GET', 'POST'])
+def edit_course(id):
+    course = db.get_or_404(Course, id)
+    form = CourseForm(
+        name=course.name,
+        start_time=course.start_time,
+        end_time=course.end_time,
+        credit=course.credit,
+        duration=course.duration,
+        description=course.description,
+    )
+    faculties = db.session.execute(db.select(Faculty)).scalars().all()
+
+    if form.validate_on_submit():
+        course.name = form.name.data
+        course.start_time = form.start_time.data
+        course.end_time = form.end_time.data
+        course.credit = form.credit.data
+        course.duration = form.duration.data
+        course.description = form.description.data
+
+        db.session.commit()
+
+        courses = db.session.execute(db.select(Course)).scalars().all()
+        return redirect(url_for('get_all', courses=courses))
+
+    return render_template('course-form.html', form=form, faculties=faculties)
 
 
 @app.route('/edit-instructor/<int:id>', methods=['GET', 'POST'])
@@ -335,7 +366,7 @@ def edit_faculty(id):
 
         db.session.commit()
 
-        faculties = db.session.execute(db.select(Student)).scalars().all()
+        faculties = db.session.execute(db.select(Faculty)).scalars().all()
         return redirect(url_for('get_all', students=faculties))
 
     return render_template('faculty-form.html', form=form, faculties=faculties)
