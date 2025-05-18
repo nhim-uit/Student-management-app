@@ -5,6 +5,7 @@
 
         {{ form.csrf_token() }}
         {{ render_form(form) }}
+        <a class="btn btn-success float-left mt-3" href="{{ url_for('get_all') }}">Back</a>
 
 
 <!--    <form method="POST">-->
