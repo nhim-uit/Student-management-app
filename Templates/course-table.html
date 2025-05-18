@@ -1,0 +1,28 @@
+{% block table %}
+<table class="table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th colspan="2"></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for course in courses %}
+        <tr>
+            <th>{{ course.id }}</th>
+            <td>{{ course.name }}</td>
+            <td><a class="btn btn-success" href="{{ url_for('edit_course', id=course.id) }}" >Edit</a></td>
+            <td><a class="btn btn-danger" href="{{ url_for('delete_course', id=course.id) }}">Delete</a></td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td colspan="9">
+                <div class="text-center">
+                    <a type="button" class="btn btn-primary text-center" href="{{ url_for('add_course') }}">Add</a>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+{% endblock %}
