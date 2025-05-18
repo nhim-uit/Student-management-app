@@ -230,13 +230,15 @@ def add_course():
     form = CourseForm()
 
     if form.validate_on_submit():
-        course = CourseForm(
+        course = Course(
             name=form.name.data,
             start_time=form.start_time.data,
             end_time=form.end_time.data,
             credit=form.credit.data,
             duration=form.duration.data,
             description=form.description.data,
+            faculty_id=1,
+            instructor_id=1,
         )
         db.session.add(course)
         db.session.commit()
