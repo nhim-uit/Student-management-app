@@ -7,11 +7,11 @@ from flask import Flask, render_template, url_for, redirect, request
 from flask_bootstrap import Bootstrap5
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
-from sqlalchemy import Integer, String, Float, DATETIME, DateTime
+from sqlalchemy import Integer, String, Float, DateTime
 from sqlalchemy.orm import DeclarativeBase, Mapped, relationship, mapped_column
 from wtforms.fields.choices import SelectField
 from wtforms.fields.datetime import DateField
-from wtforms.fields.numeric import IntegerField, FloatField
+from wtforms.fields.numeric import FloatField
 from wtforms.fields.simple import StringField, SubmitField
 from wtforms.validators import DataRequired
 
@@ -105,7 +105,18 @@ def get_all():
     students = db.session.execute(db.select(Student)).scalars().all()
     instructors = db.session.execute(db.select(Instructor)).scalars().all()
     faculties = db.session.execute(db.select(Faculty)).scalars().all()
-    return render_template('index.html', students=students, instructors=instructors, faculties=faculties)
+    student_count = db.session.execute(db.func.count(Student.id)).scalar()
+    instructor_count = db.session.execute(db.func.count(Instructor.id)).scalar()
+    faculty_count = db.session.execute(db.func.count(Faculty.id)).scalar()
+    course_count = db.session.execute(db.func.count(Course.id)).scalar()
+    return render_template('index.html',
+                           students=students,
+                           instructors=instructors,
+                           faculties=faculties,
+                           student_count=student_count,
+                           instructor_count=instructor_count,
+                           faculty_count=faculty_count,
+                           course_count=course_count)
 
 
 @app.route('/add-student', methods=['GET', 'POST'])
