@@ -400,5 +400,16 @@ def edit_faculty(id):
     return render_template('faculty-form.html', form=form)
 
 
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    form = SearchForm()
+
+    if form.validate_on_submit():
+        student = db.session.execute(db.select(Student).where(Student.id == form.id)).scalar()
+        print(student)
+        redirect(url_for('get_all'))
+    return render_template('search.html', form=form)
+
+
 if __name__ == '__main__':
     app.run(debug=True)
