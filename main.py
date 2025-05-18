@@ -11,7 +11,7 @@ from sqlalchemy import Integer, String, Float, DateTime
 from sqlalchemy.orm import DeclarativeBase, Mapped, relationship, mapped_column
 from wtforms.fields.choices import SelectField
 from wtforms.fields.datetime import DateField
-from wtforms.fields.numeric import FloatField
+from wtforms.fields.numeric import FloatField, IntegerField
 from wtforms.fields.simple import StringField, SubmitField
 from wtforms.validators import DataRequired
 
@@ -50,6 +50,7 @@ class Student(Person):
 class Instructor(Person):
     __tablename__ = 'instructors'
     faculty = relationship('Faculty', back_populates='instructors')
+    course = relationship('Course', back_populates='instructors')
     salary: Mapped[float] = mapped_column(Float, nullable=False)
     start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
@@ -66,7 +67,13 @@ class Course(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     start_time: Mapped[str] = mapped_column(String, nullable=False)
     end_time: Mapped[str] = mapped_column(String, nullable=False)
-    date_of_week: Mapped[int] = mapped_column(Integer, nullable=False)
+    credit: Mapped[int] = mapped_column(Integer, nullable=False)
+    duration: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(String(100), nullable=False)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    instructors = relationship('Instructor', back_populates='course')
+    faculty_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('faculties.id'))
+    instructor_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('instructors.id'))
 
 
 with app.app_context():
@@ -100,19 +107,36 @@ class FacultyForm(FlaskForm):
     name = StringField('Faculty name', validators=[DataRequired()])
 
 
+class CourseForm(FlaskForm):
+    name = StringField('Name', validators=[DataRequired()])
+    start_time = DateField('Start time', validators=[DataRequired()])
+    end_time = DateField('End time', validators=[DataRequired()])
+    credit = IntegerField('Credit', validators=[DataRequired()])
+    duration = StringField('Duration', validators=[DataRequired()])
+    description = StringField('Description', validators=[DataRequired()])
+
+    instructors = relationship('Instructor', back_populates='course')
+    faculty_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('faculties.id'))
+    instructor_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('instructors.id'))
+
+
 @app.route('/', methods=['GET', 'POST'])
 def get_all():
     students = db.session.execute(db.select(Student)).scalars().all()
     instructors = db.session.execute(db.select(Instructor)).scalars().all()
     faculties = db.session.execute(db.select(Faculty)).scalars().all()
+    courses = db.session.execute(db.select(Course)).scalars().all()
+
     student_count = db.session.execute(db.func.count(Student.id)).scalar()
     instructor_count = db.session.execute(db.func.count(Instructor.id)).scalar()
     faculty_count = db.session.execute(db.func.count(Faculty.id)).scalar()
     course_count = db.session.execute(db.func.count(Course.id)).scalar()
+
     return render_template('index.html',
                            students=students,
                            instructors=instructors,
                            faculties=faculties,
+                           courses=courses,
                            student_count=student_count,
                            instructor_count=instructor_count,
                            faculty_count=faculty_count,
@@ -178,6 +202,24 @@ def add_faculty():
     return render_template('faculty-form.html', form=form)
 
 
+@app.route('/add-course', methods=['GET', 'POST'])
+def add_course():
+    form = CourseForm()
+
+    if form.validate_on_submit():
+        course = CourseForm(
+            name=form.name.data,
+            start_time=form.start_time.data,
+            end_time=form.end_time.data,
+            credit=form.credit.data,
+            duration=form.duration.data,
+            description=form.description.data,
+        )
+        db.session.add(course)
+        db.session.commit()
+    return render_template('course-form.html', form=form)
+
+
 @app.route('/delete-student/', methods=['GET', 'POST'])
 def delete_student():
     student_id = request.args.get('id')
@@ -210,7 +252,18 @@ def delete_faculty():
     db.session.delete(faculty)
     db.session.commit()
     faculties = db.session.execute(db.select(faculty)).scalars().all()
-    return redirect(url_for('get_all', facultys=faculties))
+    return (redirect(url_for('get_all', facultys=faculties)))
+
+
+@app.route('/delete-course/', methods=['GET', 'POST'])
+def delete_course():
+    course_id = request.args.get('id')
+    course = db.get_or_404(Faculty, course_id)
+
+    db.session.delete(course)
+    db.session.commit()
+
+    return redirect(url_for('get_all'))
 
 
 @app.route('/edit-student/<int:id>', methods=['GET', 'POST'])
