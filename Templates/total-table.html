@@ -1,0 +1,25 @@
+{% block total %}
+<table class="table table-striped table-hover">
+        <thead>
+        <tr>
+          <th colspan="4"><img class="rounded mx-auto d-block" height="300" src="https://media.istockphoto.com/id/1311598658/vi/anh/doanh-nh%C3%A2n-giao-d%E1%BB%8Bch-th%E1%BB%8B-tr%C6%B0%E1%BB%9Dng-ch%E1%BB%A9ng-kho%C3%A1n-tr%E1%BB%B1c-tuy%E1%BA%BFn-tr%C3%AAn-m%C3%A0n-h%C3%ACnh-teblet-kh%C3%A1i-ni%E1%BB%87m-%C4%91%E1%BA%A7u-t%C6%B0-k%E1%BB%B9.jpg?s=1024x1024&w=is&k=20&c=CpjXOhxyA_vTPbZjYGWPpiJhF129AUDhIMWBFNDkMyU=">
+          </th>
+        <tr>
+            <th class="text-center">Total Students</th>
+            <th class="text-center">Total Instructors</th>
+            <th class="text-center">Total Faculties</th>
+            <th class="text-center">Total Courses</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <th class="text-center">{{ student_count }}</th>
+          <th class="text-center">{{ instructor_count }}</th>
+          <th class="text-center">{{ faculty_count }}</th>
+          <th class="text-center">{{ course_count }}</th>
+
+        </tr>
+
+        </tbody>
+    </table>
+{% endblock %}
