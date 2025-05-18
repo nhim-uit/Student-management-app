@@ -12,7 +12,8 @@
 </ul>
 <div class="tab-content" id="myTabContent">
   <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">{% include 'student-table.html' %}</div>
-  <div class="tab-pane fade" id="profile-tab-pane" role="tabpanel" aria-labelledby="profile-tab" tabindex="0">{% include 'instructor-table.html' %}</div>
-  <div class="tab-pane fade" id="contact-tab-pane" role="tabpanel" aria-labelledby="contact-tab" tabindex="0">{% include 'faculty-table.html' %}</div>
+  <div class="tab-pane fade" role="tabpanel" aria-labelledby="profile-tab" tabindex="0">{% include 'instructor-table.html' %}</div>
+  <div class="tab-pane fade" role="tabpanel" aria-labelledby="contact-tab" tabindex="0">{% include 'faculty-table.html' %}</div>
+  <div class="tab-pane fade" role="tabpanel" aria-labelledby="contact-tab" tabindex="0">{% include 'course-table.html' %}</div>
 </div>
 {% endblock %}
