@@ -128,6 +128,11 @@ class CourseForm(FlaskForm):
     submit = SubmitField('Submit Post')
 
 
+class SearchForm(FlaskForm):
+    id = IntegerField('Student ID: ', validators=[DataRequired()])
+    submit = SubmitField('Search')
+
+
 @app.route('/add-my-faculty', methods=['GET', 'POST'])
 def add_my_faculty():
     faculty1 = Faculty(
