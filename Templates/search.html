@@ -1,7 +1,16 @@
+<div class="container">
 <form method="POST">
-        <div class="form-group">
-            <label>ID:</label>
+        <div class="form-group row">
+            <label class="col-sm-4 col-form-label">Search By | Student ID:</label>
+            <div class="col-sm-6 mt-2">
             <input name="id" class="form-control"/>
+            </div>
+            <div class="col-sm-2">
+                <button type="submit" class="btn btn-primary mb-2 mt-2">Submit</button>
+            </div>
         </div>
-    <button type="submit" class="btn btn-primary mb-2 mt-2">Submit</button>
+        <div class="row">
+            {% include 'search_table.html' %}
+        </div>
 </form>
+</div>
