@@ -411,5 +411,13 @@ def search():
     return render_template('search.html', form=form)
 
 
+@app.route('search-student', methods=['GET', 'POST'])
+def search_student():
+    if request.method == 'POST':
+        id = request.form('id')
+        student = db.get_or_404(Student, id)
+        return render_template('index.html', student=student)
+    return render_template('search.html')
+
 if __name__ == '__main__':
     app.run(debug=True)
