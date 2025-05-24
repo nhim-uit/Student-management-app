@@ -1,8 +1,14 @@
 {% block nav %}
 <ul class="nav nav-tabs" id="myTab" role="tablist">
+  {% if not is_student %}
   <li class="nav-item" role="presentation">
     <button class="nav-link active" id="student-tab" data-bs-toggle="tab" data-bs-target="#student-tab-pane" type="button" role="tab" aria-controls="student-tab-pane" aria-selected="true">Student</button>
   </li>
+  {% else %}
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="student-tab" data-bs-toggle="tab" data-bs-target="#student-tab-pane" type="button" role="tab" aria-controls="student-tab-pane" aria-selected="true">Student</button>
+  </li>
+  {% endif %}
   <li class="nav-item" role="presentation">
     <button class="nav-link" id="instructor-tab" data-bs-toggle="tab" data-bs-target="#instructor-tab-pane" type="button" role="tab" aria-controls="instructor-tab-pane" aria-selected="false">Instructor</button>
   </li>
@@ -12,16 +18,30 @@
   <li class="nav-item" role="presentation">
     <button class="nav-link" id="course-tab" data-bs-toggle="tab" data-bs-target="#course-tab-pane" type="button" role="tab" aria-controls="course-tab-pane" aria-selected="false">Course</button>
   </li>
+  {% if not is_student %}
   <li class="nav-item" role="presentation">
     <button class="nav-link" id="search-tab" data-bs-toggle="tab" data-bs-target="#search-tab-pane" type="button" role="tab" aria-controls="search-tab-pane" aria-selected="false">Search</button>
   </li>
+  {% else %}
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="search-tab" data-bs-toggle="tab" data-bs-target="#search-tab-pane" type="button" role="tab" aria-controls="search-tab-pane" aria-selected="false">Search</button>
+  </li>
+  {% endif %}
 </ul>
 <div class="tab-content" id="myTabContent">
+  {% if not is_student %}
   <div class="tab-pane fade show active" id="student-tab-pane" role="tabpanel" aria-labelledby="student-tab" tabindex="0">{% include 'student-table.html' %}</div>
   <div class="tab-pane fade" id="instructor-tab-pane" role="tabpanel" aria-labelledby="instructor-tab" tabindex="0">{% include 'instructor-table.html' %}</div>
   <div class="tab-pane fade" id="faculty-pane" role="tabpanel" aria-labelledby="faculty-tab" tabindex="0">{% include 'faculty-table.html' %}</div>
   <div class="tab-pane fade" id="course-tab-pane" role="tabpanel" aria-labelledby="course-tab" tabindex="0">{% include 'course-table.html' %}</div>
   <div class="tab-pane fade" id="search-tab-pane" role="tabpanel" aria-labelledby="search-tab" tabindex="0">{% include 'search.html' %}</div>
+  {% else %}
+  <div class="tab-pane fade" id="student-tab-pane" role="tabpanel" aria-labelledby="student-tab" tabindex="0">{% include 'student-table.html' %}</div>
+  <div class="tab-pane fade" id="instructor-tab-pane" role="tabpanel" aria-labelledby="instructor-tab" tabindex="0">{% include 'instructor-table.html' %}</div>
+  <div class="tab-pane fade" id="faculty-pane" role="tabpanel" aria-labelledby="faculty-tab" tabindex="0">{% include 'faculty-table.html' %}</div>
+  <div class="tab-pane fade" id="course-tab-pane" role="tabpanel" aria-labelledby="course-tab" tabindex="0">{% include 'course-table.html' %}</div>
+  <div class="tab-pane fade show active" id="search-tab-pane" role="tabpanel" aria-labelledby="search-tab" tabindex="0">{% include 'search.html' %}</div>
+  {% endif %}
 </div>
 
 {% endblock %}
