@@ -173,7 +173,7 @@ def get_all():
                                faculty_count=faculty_count,
                                course_count=course_count,
                                student=student,
-                               is_student=is_student)
+                               is_student=True)
 
     return render_template('index.html',
                            students=students,
@@ -183,7 +183,8 @@ def get_all():
                            student_count=student_count,
                            instructor_count=instructor_count,
                            faculty_count=faculty_count,
-                           course_count=course_count)
+                           course_count=course_count,
+                           is_student=False)
 
 
 @app.route('/add-student', methods=['GET', 'POST'])
