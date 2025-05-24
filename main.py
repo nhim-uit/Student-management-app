@@ -159,6 +159,22 @@ def get_all():
     faculty_count = db.session.execute(db.func.count(Faculty.id)).scalar()
     course_count = db.session.execute(db.func.count(Course.id)).scalar()
 
+    if request.method == 'POST':
+        id = request.form['id']
+        student = db.get_or_404(Student, id)
+        is_student = True
+        return render_template('index.html',
+                               students=students,
+                               instructors=instructors,
+                               faculties=faculties,
+                               courses=courses,
+                               student_count=student_count,
+                               instructor_count=instructor_count,
+                               faculty_count=faculty_count,
+                               course_count=course_count,
+                               student=student,
+                               is_student=is_student)
+
     return render_template('index.html',
                            students=students,
                            instructors=instructors,
@@ -409,38 +425,6 @@ def search():
         print(student)
         redirect(url_for('get_all'))
     return render_template('search.html', form=form)
-
-
-@app.route('/search-student', methods=['GET', 'POST'])
-def search_student():
-    print('yes')
-    if request.method == 'POST':
-        id = request.form['id']
-        student = db.get_or_404(Student, id)
-
-        students = db.session.execute(db.select(Student)).scalars().all()
-        instructors = db.session.execute(db.select(Instructor)).scalars().all()
-        faculties = db.session.execute(db.select(Faculty)).scalars().all()
-        courses = db.session.execute(db.select(Course)).scalars().all()
-
-        student_count = db.session.execute(db.func.count(Student.id)).scalar()
-        instructor_count = db.session.execute(db.func.count(Instructor.id)).scalar()
-        faculty_count = db.session.execute(db.func.count(Faculty.id)).scalar()
-        course_count = db.session.execute(db.func.count(Course.id)).scalar()
-
-        return render_template('index.html',
-                               students=students,
-                               instructors=instructors,
-                               faculties=faculties,
-                               courses=courses,
-                               student_count=student_count,
-                               instructor_count=instructor_count,
-                               faculty_count=faculty_count,
-                               course_count=course_count,
-                               student=student,
-                               is_student=True)
-
-    return render_template('search.html')
 
 
 if __name__ == '__main__':
