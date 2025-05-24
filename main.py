@@ -238,12 +238,14 @@ def add_faculty():
     form = FacultyForm()
 
     if form.validate_on_submit():
-        faculty = FacultyForm(
+        faculty = Faculty(
             name=form.name.data,
         )
         db.session.add(faculty)
         db.session.commit()
+        print(form.errors)
         return redirect(url_for('get_all'))
+
     return render_template('faculty-form.html', form=form)
 
 
