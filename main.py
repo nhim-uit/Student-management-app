@@ -90,8 +90,12 @@ class PersonForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
     dob = DateField('Date of Birth', validators=[DataRequired()])
     gender = SelectField('Gender', choices=[('F', 'Female'), ('M', 'Male')], validators=[DataRequired()])
+
+    with app.app_context():
+        faculties = db.session.execute(db.select(Faculty)).scalars().all()
+        choices = [(x + 1, i.name) for x, i in enumerate(faculties)]
     faculty_id = SelectField('Faculty',
-                             choices=[(1, 'Computer Science'), (2, 'Engineering'), (3, 'Arts')],
+                             choices=choices,
                              validators=[DataRequired()])
 
 
@@ -103,8 +107,11 @@ class StudentForm(PersonForm):
 class InstructorForm(PersonForm):
     salary = FloatField('Salary', validators=[DataRequired()])
     start_date = DateField('Start date', validators=[DataRequired()])
+    with app.app_context():
+        faculties = db.session.execute(db.select(Faculty)).scalars().all()
+        choices = [(x + 1, i.name) for x, i in enumerate(faculties)]
     faculty_id = SelectField('Faculty',
-                             choices=[(1, 'Computer Science'), (2, 'Engineering'), (3, 'Arts')],
+                             choices=choices,
                              validators=[DataRequired()])
     submit = SubmitField('Submit Post')
 
@@ -222,7 +229,7 @@ def add_instructor():
             gender=form.gender.data,
             salary=form.salary.data,
             start_date=form.start_date.data,
-            faculty_id=form.faculty_id.data,
+            faculty_id=form.faculty_id,
         )
         db.session.add(instructor)
         db.session.commit()
@@ -325,6 +332,7 @@ def edit_student(id):
         dob=student.dob,
         gender=student.gender,
         gpa=student.gpa,
+        faculty_id=student.faculty_id,
     )
     faculties = db.session.execute(db.select(Faculty)).scalars().all()
 
@@ -334,6 +342,7 @@ def edit_student(id):
         student.dob = form.dob.data
         student.gender = form.gender.data
         student.gpa = form.gpa.data
+        student.faculty_id = form.faculty_id.data
 
         db.session.commit()
 
@@ -382,6 +391,7 @@ def edit_instructor(id):
         gender=instructor.gender,
         salary=instructor.salary,
         start_date=instructor.start_date,
+        faculty_id=instructor.faculty_id,
     )
 
     if form.validate_on_submit():
@@ -391,6 +401,7 @@ def edit_instructor(id):
         instructor.gender = form.gender.data
         instructor.start_date = form.start_date.data
         instructor.salary = form.salary.data
+        instructor.faculty_id = form.faculty_id.data
 
         db.session.commit()
 
